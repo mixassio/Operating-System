@@ -1,3 +1,6 @@
+# Homework 2
+
+## Подготовка на машине-шаблоне
 ```
 192:RAID mixassio$ vagrant ssh
 [vagrant@otuslinux ~]$ pwd
@@ -8,7 +11,7 @@
 sata1.vdi  sata2.vdi  sata3.vdi  sata4.vdi  sata5.vdi  Vagrantfile
 [vagrant@otuslinux vagrant]$
 ```
-
+## Проверка параметров блочных устройств
 ```
 [vagrant@otuslinux vagrant]$ sudo fdisk -l
 
@@ -62,6 +65,8 @@ sdd      8:48   0  250M  0 disk
 sde      8:64   0  250M  0 disk
 sdf      8:80   0  250M  0 disk
 
+
+
 [vagrant@otuslinux vagrant]$ lsscsi
 [0:0:0:0]    disk    ATA      VBOX HARDDISK    1.0   /dev/sda
 [3:0:0:0]    disk    ATA      VBOX HARDDISK    1.0   /dev/sdb
@@ -69,6 +74,8 @@ sdf      8:80   0  250M  0 disk
 [5:0:0:0]    disk    ATA      VBOX HARDDISK    1.0   /dev/sdd
 [6:0:0:0]    disk    ATA      VBOX HARDDISK    1.0   /dev/sde
 [7:0:0:0]    disk    ATA      VBOX HARDDISK    1.0   /dev/sdf
+
+
 
 vagrant@otuslinux vagrant]$ sudo lshw -short | grep disk
 /0/100/1.1/0.0.0    /dev/sda   disk        42GB VBOX HARDDISK
@@ -79,6 +86,8 @@ vagrant@otuslinux vagrant]$ sudo lshw -short | grep disk
 /0/100/d/0.0.0      /dev/sdf   disk        262MB VBOX HARDDISK
 ```
 
+
+## Зануление суперблоков
 ```
 vagrant@otuslinux vagrant]$ sudo mdadm --zero-superblock --force /dev/sd{b,c,d,e,f}
 mdadm: Unrecognised md component device - /dev/sdb
@@ -88,7 +97,7 @@ mdadm: Unrecognised md component device - /dev/sde
 mdadm: Unrecognised md component device - /dev/sdf
 ```
 
-
+## Создание RAID
 ```
 [vagrant@otuslinux vagrant]$ sudo mdadm --create --verbose /dev/md0 -l 6 -n 5 /dev/sd{b,c,d,e,f}
 mdadm: layout defaults to left-symmetric
@@ -98,7 +107,7 @@ mdadm: size set to 253952K
 mdadm: Defaulting to version 1.2 metadata
 mdadm: array /dev/md0 started.
 ```
-
+## Проверка что RAID собрался
 ```
 [vagrant@otuslinux vagrant]$ cat /proc/mdstat
 Personalities : [raid6] [raid5] [raid4]
@@ -106,9 +115,8 @@ md0 : active raid6 sdf[4] sde[3] sdd[2] sdc[1] sdb[0]
       761856 blocks super 1.2 level 6, 512k chunk, algorithm 2 [5/5] [UUUUU]
 
 unused devices: <none>
-```
 
-```
+
 [vagrant@otuslinux vagrant]$ sudo mdadm -D /dev/md0
 /dev/md0:
            Version : 1.2
@@ -144,7 +152,7 @@ Consistency Policy : resync
        4       8       80        4      active sync   /dev/sdf
 ```
 
- Создание конфигурационного файла mdadm.conf
+ ## Создание конфигурационного файла mdadm.conf
 
  ```
 [vagrant@otuslinux vagrant]$ sudo mdadm --detail --scan --verbose
@@ -157,7 +165,7 @@ ARRAY /dev/md0 level=raid6 num-devices=5 metadata=1.2 name=otuslinux:0 UUID=1876
 DEVICE partitions
 ARRAY /dev/md0 level=raid6 num-devices=5 metadata=1.2 name=otuslinux:0 UUID=1876237e:1f01a703:fbaa613d:2a30d5f6
 ```
-Broke
+## Сломать RAID
 ```
 vagrant@otuslinux mdadm]$ sudo mdadm /dev/md0 --fail /dev/sde
 mdadm: set /dev/sde faulty in /dev/md0
@@ -205,10 +213,13 @@ Consistency Policy : resync
        3       8       64        -      faulty   /dev/sde
 ```
 
-
+## Удалить “сломанный” диск из массива
 ```
 [vagrant@otuslinux mdadm]$ sudo mdadm /dev/md0 --remove /dev/sde
 mdadm: hot removed /dev/sde from /dev/md0
+```
+## Вставим "новый" диск
+```
 [vagrant@otuslinux mdadm]$ sudo mdadm /dev/md0 --add /dev/sde
 mdadm: added /dev/sde
 vagrant@otuslinux mdadm]$ cat /proc/mdstat
