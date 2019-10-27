@@ -1,0 +1,22 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+
+Vagrant.configure("2") do |config|
+  config.vm.box = "centos/7"
+  config.vm.hostname = "vagrant.vm"
+  config.vm.provision "file", source: "./access-4560-644067.log", destination: "/vagrant/access.log"
+  config.vm.provision "file", source: "./script.sh", destination: "/vagrant/script.sh"
+  config.vm.provision "shell",
+    inline: "sudo systemctl restart postfix"
+  config.vm.provision "shell",
+    inline: "sudo yum install -y mailx"
+  config.vm.provision "shell",
+    inline: "sudo chmod +x /vagrant/script.sh"
+  config.vm.provision "shell",
+    inline: "echo '* * * * * /vagrant/script.sh' | EDITOR='tee -a' crontab -e"
+  # config.vm.provision "shell",
+    # inline: "echo '* * * * * mail -s 'cron' root@vagrant.vm ' | EDITOR='tee -a' crontab -e"
+  # config.vm.provision "shell",
+    # inline: "echo '* * * * * ls -l' | EDITOR='tee -a' crontab -u vagrant -e"
+end
